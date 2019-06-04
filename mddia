@@ -13,13 +13,13 @@ mddia - preprocess diagrams embedded in pandoc markdown
 
 =head1 SYNOPSIS
 
-mddia [-png|-pdf] [options] input [output]
+mddia [-png|-pdf|-svg] [options] input [output]
 
 =cut
 
 # required jar files
 my $loc = dirname(abs_path($0));
-foreach ("$loc/ditaa0_6b.jar", "$loc/DitaaEps.jar") {
+foreach ("$loc/ditaa0_6b.jar", "$loc/DitaaEps.jar", "$loc/ditaa-0.11.0-standalone.jar") {
     -f $_ || pod2usage("missing $_");
 }
 
@@ -40,10 +40,14 @@ my %diagramtypes = (
         if ($format eq 'png') {
             $img = "$file.png";
             $jar = "$loc/ditaa0_6b.jar";
-        } else {
+        } elsif ($format eq 'pdf') {
             $img = "$file.eps";
             $jar = "$loc/DitaaEps.jar";
+        } elsif ($format eq 'svg') {
+            $img = "$file.svg";
+            $jar = "$loc/ditaa-0.11.0-standalone.jar --svg";
         }
+
         my $args = join ' ', map { s/^\.//; s/:/ /; "--$_"; } @classes;
         system join ' ', 'java', '-jar', $jar, @ARGV, "$args", "$file.ditaa", $img, ">/dev/null";
         system "epstopdf", "-o", "$file.$format", $img if $format eq 'pdf';
@@ -72,7 +76,7 @@ my %diagramtypes = (
 
 pod2usage(1) if grep /^-(help|h)$/, @ARGV;
 
-if (@ARGV and $ARGV[0] =~ /^-(pdf|png)$/) {
+if (@ARGV and $ARGV[0] =~ /^-(pdf|png|svg)$/) {
 	$format = $1;
 	shift @ARGV;
 } else {
@@ -89,9 +93,9 @@ if (@ARGV and $ARGV[0] !~ /^-/) {
 	*OUT = *STDOUT;
 }
 
-pod2usage("unknown format") if $format !~ /^(png|pdf)$/;
+pod2usage("unknown format") if $format !~ /^(png|pdf|svg)$/;
 
-my %ditaa = ( png => "$loc/ditaa0_6b.jar", pdf => "$loc/DitaaEps.jar" );
+my %ditaa = ( png => "$loc/ditaa0_6b.jar", pdf => "$loc/DitaaEps.jar", svg => "$loc/ditaa-0.11.0-standalone.jar --svg" );
 
 my $line = 0;
 while (<IN>) {
